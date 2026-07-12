@@ -167,8 +167,17 @@
       font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
       transition: all 0.2s var(--ease);
     }
-    .btn-preview { background: var(--lime); color: var(--black); }
-    .btn-preview:hover { background: #96ff1f; }
+    .btn-preview {
+      background: transparent; border: 1px solid var(--lime); color: var(--lime);
+    }
+    .btn-preview:hover { background: rgba(135,255,0,0.1); }
+
+    .btn-publish {
+      background: var(--lime); border: none; color: var(--black);
+      cursor: pointer; font-family: var(--font-body);
+    }
+    .btn-publish:hover { background: #96ff1f; }
+    .btn-publish:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-ghost {
       background: transparent; border: 1px solid var(--border-2);
       color: var(--grey-dim); cursor: pointer;
@@ -217,8 +226,9 @@
     <h1>Request a change</h1>
     <p class="lede">
       Describe what you'd like changed on the website in plain English. It'll be
-      built and you'll get a preview link to check before anything goes live.
-      Nothing reaches the public site until GAS Marketing has approved it.
+      built, and you'll get a preview link so you can see exactly how it looks
+      before anything goes live. <strong style="color:var(--white);">Always check
+      the preview first</strong> - then publish it to the site when you're happy.
     </p>
 
     <div id="alert" class="alert hidden"></div>
@@ -275,9 +285,12 @@
 
       var actions = '';
       if (r.state === 'review') {
+        // Preview first, deliberately. Publishing is one click, but it should
+        // not be the first click.
         if (r.preview) {
-          actions += '<a class="btn-sm btn-preview" href="' + esc(r.preview) + '" target="_blank" rel="noopener">View preview</a>';
+          actions += '<a class="btn-sm btn-preview" href="' + esc(r.preview) + '" target="_blank" rel="noopener">1. View preview</a>';
         }
+        actions += '<button class="btn-sm btn-publish" data-publish="' + r.number + '">2. Publish to site</button>';
         actions += '<button class="btn-sm btn-ghost" data-discard="' + r.number + '">Discard</button>';
       }
 
@@ -343,22 +356,39 @@
         });
     });
 
-    listEl.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-discard]');
-      if (!btn) return;
-      if (!confirm('Discard this change? It will not be applied to the site.')) return;
-
+    function act(endpoint, number, btn, failMsg, okMsg) {
       var body = new FormData();
-      body.append('number', btn.getAttribute('data-discard'));
+      body.append('number', number);
       btn.disabled = true;
 
-      fetch('/api/admin/discard', { method: 'POST', body: body, credentials: 'same-origin' })
+      fetch(endpoint, { method: 'POST', body: body, credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d.error) say(d.error, false);
+          if (d.error) { say(d.error, false); btn.disabled = false; return; }
+          if (okMsg) say(okMsg, true);
           load();
         })
-        .catch(function () { say('Could not discard that request.', false); });
+        .catch(function () { say(failMsg, false); btn.disabled = false; });
+    }
+
+    listEl.addEventListener('click', function (e) {
+      var pub = e.target.closest('[data-publish]');
+      if (pub) {
+        if (!confirm('Publish this change to movementmechanics.co.za?\n\nIt will be live on the public website within about a minute.')) return;
+        clearSay();
+        act('/api/admin/publish', pub.getAttribute('data-publish'), pub,
+            'Could not publish that change.',
+            'Published. It will be live on the site within about a minute.');
+        return;
+      }
+
+      var dis = e.target.closest('[data-discard]');
+      if (dis) {
+        if (!confirm('Discard this change? It will not be applied to the site.')) return;
+        clearSay();
+        act('/api/admin/discard', dis.getAttribute('data-discard'), dis,
+            'Could not discard that request.', null);
+      }
     });
 
     load();
