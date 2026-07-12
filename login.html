@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Movement Mechanics | Site Access</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <style>
+    :root {
+      --lime: #87ff00;
+      --lime-dim: #6bcc00;
+      --lime-tint: rgba(135, 255, 0, 0.1);
+      --black: #050505;
+      --black-2: #101010;
+      --black-3: #161616;
+      --border: #232323;
+      --border-2: #2c2c2c;
+      --white: #ffffff;
+      --grey: #a6a6a6;
+      --grey-dim: #7a7a7a;
+      --font-display: 'Anton', 'Arial Narrow', sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--black);
+      font-family: var(--font-body);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Faint lime glow behind the card, echoing the site's hero treatment. */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 900px; height: 900px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(135, 255, 0, 0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      animation: rise 0.7s var(--ease) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .card::before {
+      content: '';
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, var(--lime), var(--lime-dim));
+    }
+
+    .inner { padding: 40px 36px 36px; }
+
+    .logo {
+      display: block;
+      width: 190px;
+      max-width: 65%;
+      height: auto;
+      margin-bottom: 34px;
+    }
+
+    .kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 34px;
+      line-height: 1.05;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .lede {
+      font-size: 14px;
+      line-height: 22px;
+      color: var(--grey);
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--grey-dim);
+      margin-bottom: 8px;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--black-2);
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 15px;
+      transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+    }
+
+    input::placeholder { color: #4a4a4a; }
+
+    input:focus {
+      outline: none;
+      border-color: var(--lime);
+      background: var(--black-3);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 6px;
+      padding: 15px 20px;
+      background: var(--lime);
+      border: none;
+      border-radius: 8px;
+      color: var(--black);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s var(--ease);
+    }
+
+    button:hover {
+      background: #96ff1f;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(135, 255, 0, 0.22);
+    }
+
+    button:active { transform: none; }
+
+    .alert {
+      display: flex;
+      gap: 10px;
+      padding: 13px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 19px;
+      margin-bottom: 24px;
+    }
+
+    .alert-error {
+      background: rgba(255, 62, 62, 0.07);
+      border: 1px solid rgba(255, 62, 62, 0.3);
+      color: #ff6b6b;
+    }
+
+    .alert-ok {
+      background: var(--lime-tint);
+      border: 1px solid rgba(135, 255, 0, 0.3);
+      color: var(--lime);
+    }
+
+    .foot {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 18px;
+      color: #4a4a4a;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 480px) {
+      .inner { padding: 32px 24px 28px; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="card">
+    <div class="inner">
+
+      <img src="assets/img/logo-full-onDark.png" alt="Movement Mechanics" class="logo">
+
+      <p class="kicker">Site in development</p>
+      <h1>Private Preview</h1>
+      <p class="lede">
+        This site isn't public yet. Sign in with the access details provided to
+        preview it.
+      </p>
+
+      <div id="err" class="alert alert-error hidden">
+        <span>&#9888;</span>
+        <span>Those details weren't recognised. Please check and try again.</span>
+      </div>
+
+      <div id="cfg" class="alert alert-error hidden">
+        <span>&#9888;</span>
+        <span>Access isn't configured correctly. Please contact the developer.</span>
+      </div>
+
+      <div id="out" class="alert alert-ok hidden">
+        <span>&#10003;</span>
+        <span>You've been signed out.</span>
+      </div>
+
+      <form method="POST" action="/api/login" autocomplete="on">
+        <input type="hidden" name="next" id="next" value="/">
+
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="email" id="username" name="username" required
+                 placeholder="you@example.com" autocomplete="username" autofocus>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required
+                 placeholder="Enter your password" autocomplete="current-password">
+        </div>
+
+        <button type="submit">Enter Site</button>
+      </form>
+
+      <p class="foot">
+        Movement Mechanics &middot; Performance Testing &amp; Movement Science<br>
+        Access is temporary while the site is in development.
+      </p>
+
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var p = new URLSearchParams(location.search);
+
+      if (p.get('error') === '1') document.getElementById('err').classList.remove('hidden');
+      if (p.get('error') === 'config') document.getElementById('cfg').classList.remove('hidden');
+      if (p.get('out') === '1') document.getElementById('out').classList.remove('hidden');
+
+      // Carry the originally-requested page through the login, so the visitor
+      // lands where they were headed. Only same-site paths - the server
+      // re-checks this too, since anything from the URL bar is untrusted.
+      var next = p.get('next');
+      if (next && next.charAt(0) === '/' && next.charAt(1) !== '/') {
+        document.getElementById('next').value = next;
+      }
+    })();
+  </script>
+
+</body>
+</html>
