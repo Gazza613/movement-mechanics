@@ -47,19 +47,38 @@ const PUBLIC_PATHS = new Set([
   "/apple-touch-icon.png",
 ]);
 
+/**
+ * The admin dashboard is ALWAYS behind the login, whether or not the
+ * development gate is on. When the site goes public (GATE_ENABLED=0), the
+ * pages open up - but "/admin" absolutely must not, or it becomes a public
+ * button for editing the client's website.
+ */
+function isAdminPath(pathname) {
+  return pathname === "/admin.html" || pathname.startsWith("/api/admin/");
+}
+
 export default async function middleware(request) {
-  if (process.env.GATE_ENABLED !== "1") return next();
+  const url = new URL(request.url);
+  const gateOn = process.env.GATE_ENABLED === "1";
+  const admin = isAdminPath(url.pathname);
+
+  // Nothing to protect: gate is off and this isn't an admin route.
+  if (!gateOn && !admin) return next();
 
   const secret = process.env.GATE_SECRET;
   const user = process.env.GATE_USER;
   const pass = process.env.GATE_PASSWORD;
 
-  // Misconfigured: fail open. Locking a live client site out of the world
-  // because someone fat-fingered an env var name is the worse failure.
-  if (!secret || !user || !pass) return next();
+  if (!secret || !user || !pass) {
+    // Admin routes FAIL CLOSED - a misconfigured env var must never expose the
+    // dashboard. The public site FAILS OPEN, because locking a live client
+    // site out of the world over a typo is the worse failure.
+    return admin
+      ? new Response("Admin is not configured.", { status: 503 })
+      : next();
+  }
 
-  const url = new URL(request.url);
-  if (PUBLIC_PATHS.has(url.pathname)) return next();
+  if (!admin && PUBLIC_PATHS.has(url.pathname)) return next();
 
   const token = readCookie(request, COOKIE_NAME);
   if (await verifyToken(secret, token)) return next();

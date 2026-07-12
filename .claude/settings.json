@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(./middleware.js)",
+      "Edit(./lib/gate.js)",
+      "Edit(./api/**)",
+      "Edit(./.github/**)",
+      "Edit(./.claude/**)",
+      "Edit(./CLAUDE.md)",
+      "Edit(./package.json)",
+      "Edit(./package-lock.json)",
+      "Edit(./.env)",
+      "Edit(./.env.local)",
+      "Write(./middleware.js)",
+      "Write(./lib/gate.js)",
+      "Write(./api/**)",
+      "Write(./.github/**)",
+      "Write(./.claude/**)",
+      "Write(./package.json)",
+      "Write(./.env)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Bash(rm:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+      "Bash(npm publish:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ]
+  }
+}
