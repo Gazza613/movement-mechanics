@@ -23,7 +23,7 @@
  */
 
 import { Resend } from "resend";
-import { renderEmail } from "../lib/email.js";
+import { renderEmail, replyTo } from "../lib/email.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = process.env.TO_EMAIL || "movementmechanics.sa@gmail.com";
@@ -145,7 +145,7 @@ export async function POST(request) {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
-      replyTo: `${name} <${email}>`,
+      replyTo: replyTo(name, email),
       subject: `New careers application - ${SITE_NAME}${role ? ` (${role})` : ""}`,
       text: textBody,
       html: htmlBody,
