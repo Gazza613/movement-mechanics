@@ -23,11 +23,15 @@
  */
 
 import { Resend } from "resend";
+import { renderEmail } from "../lib/email.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = process.env.TO_EMAIL || "movementmechanics.sa@gmail.com";
 const FROM_EMAIL = process.env.RESEND_FROM || "Movement Mechanics Website <onboarding@resend.dev>";
 const SITE_NAME = "Movement Mechanics";
+// Absolute origin for the logo in the HTML email. Must point at wherever the
+// site is actually reachable - a relative path renders as a broken image.
+const SITE_URL = process.env.SITE_URL || "https://movementmechanics.co.za";
 const MAX_BYTES = 4 * 1024 * 1024; // 4MB - stays under Vercel's ~4.5MB request cap
 const ALLOWED_EXT = ["pdf", "doc", "docx"];
 const ALLOWED_MIME = [
@@ -118,6 +122,22 @@ export async function POST(request) {
     `Submitted: ${new Date().toISOString()}`,
   ].join("\n");
 
+  const htmlBody = renderEmail({
+    kicker: "Careers - expression of interest",
+    title: role || "New application",
+    preheader: `${name}${role ? ` - ${role}` : ""} - ${attachmentNote}`,
+    siteUrl: SITE_URL,
+    badge: attachmentNote,
+    fields: [
+      { label: "Name", value: name },
+      { label: "Email", value: email, href: `mailto:${email}` },
+      { label: "Phone", value: phone, href: `tel:${phone.replace(/\s+/g, "")}` },
+      { label: "Role / area of interest", value: role },
+      { label: "LinkedIn / portfolio", value: link, href: link },
+    ],
+    message,
+  });
+
   try {
     // IMPORTANT: the Resend SDK does NOT throw on API failures - it resolves
     // with { data: null, error: {...} }. Checking result.error is what
@@ -128,6 +148,7 @@ export async function POST(request) {
       replyTo: `${name} <${email}>`,
       subject: `New careers application - ${SITE_NAME}${role ? ` (${role})` : ""}`,
       text: textBody,
+      html: htmlBody,
       attachments,
     });
     if (result.error) {

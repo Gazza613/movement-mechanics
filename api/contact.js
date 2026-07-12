@@ -17,11 +17,15 @@
  */
 
 import { Resend } from "resend";
+import { renderEmail } from "../lib/email.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = process.env.TO_EMAIL || "movementmechanics.sa@gmail.com";
 const FROM_EMAIL = process.env.RESEND_FROM || "Movement Mechanics Website <onboarding@resend.dev>";
 const SITE_NAME = "Movement Mechanics";
+// Absolute origin for the logo in the HTML email. Must point at wherever the
+// site is actually reachable - a relative path renders as a broken image.
+const SITE_URL = process.env.SITE_URL || "https://movementmechanics.co.za";
 
 function clean(v) {
   return String(v || "").trim();
@@ -79,6 +83,23 @@ export async function POST(request) {
     `Submitted: ${new Date().toISOString()}`,
   ].join("\n");
 
+  const htmlBody = renderEmail({
+    kicker: "New website enquiry",
+    title: service || "New enquiry",
+    preheader: `${name} - ${service}`,
+    siteUrl: SITE_URL,
+    fields: [
+      { label: "Name", value: name },
+      { label: "Email", value: email, href: `mailto:${email}` },
+      { label: "Phone", value: phone, href: `tel:${phone.replace(/\s+/g, "")}` },
+      { label: "Service interest", value: service },
+      { label: "Number of athletes", value: athletes },
+      { label: "Preferred date(s)", value: dates },
+      { label: "Preferred testing location", value: venue },
+    ],
+    message,
+  });
+
   try {
     // IMPORTANT: the Resend SDK does NOT throw on API failures - it resolves
     // with { data: null, error: {...} }. Checking result.error is what
@@ -89,6 +110,7 @@ export async function POST(request) {
       replyTo: `${name} <${email}>`,
       subject: `New enquiry from ${SITE_NAME} website - ${service}`,
       text: textBody,
+      html: htmlBody,
     });
     if (result.error) {
       console.error("Resend send error (contact):", result.error);
