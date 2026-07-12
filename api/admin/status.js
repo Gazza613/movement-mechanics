@@ -88,6 +88,12 @@ export async function GET(request) {
     return json({ configured: true, requests: results });
   } catch (err) {
     console.error("Status lookup failed:", err);
-    return json({ error: "Couldn't load your requests." }, 502);
+    // Surface GitHub's own message. This endpoint is behind the login, so it's
+    // only ever the site owner reading it - and "Bad credentials" vs "Not
+    // Found" is the difference between a wrong token and a wrong repo name.
+    return json(
+      { error: `Couldn't load your requests. GitHub said: ${err.message} (repo: ${repo() || "NOT SET"})` },
+      502,
+    );
   }
 }
