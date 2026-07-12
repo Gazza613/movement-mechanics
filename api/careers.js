@@ -122,12 +122,22 @@ export async function POST(request) {
     `Submitted: ${new Date().toISOString()}`,
   ].join("\n");
 
+  // Three distinct states, because "no CV was sent" and "a CV was sent but we
+  // rejected it" are very different things for whoever reads this email - and
+  // the second one is easy to miss if it looks the same as the first.
+  const badgeState = attachments.length
+    ? "attached"
+    : attachmentNote.startsWith("CV attachment skipped")
+      ? "warning"
+      : "none";
+
   const htmlBody = renderEmail({
     kicker: "Careers - expression of interest",
     title: role || "New application",
     preheader: `${name}${role ? ` - ${role}` : ""} - ${attachmentNote}`,
     siteUrl: SITE_URL,
     badge: attachmentNote,
+    badgeState,
     fields: [
       { label: "Name", value: name },
       { label: "Email", value: email, href: `mailto:${email}` },
