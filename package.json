@@ -1,0 +1,13 @@
+{
+  "name": "movement-mechanics-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Movement Mechanics marketing site - static pages + Vercel Functions for the contact and careers forms.",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "resend": "^6.0.0"
+  }
+}
