@@ -10,7 +10,7 @@
  * dashboard nudges them to use it.
  */
 
-import { authorised, configured, gh, json, repo } from "../../lib/github.js";
+import { authorised, configured, gh, isOurs, json, repo } from "../../lib/github.js";
 
 export async function POST(request) {
   if (!(await authorised(request))) return json({ error: "Not signed in." }, 401);
@@ -34,10 +34,7 @@ export async function POST(request) {
     // Only ever act on issues this dashboard created. Without this, a crafted
     // request could merge any open pull request in the repository - including
     // one nobody has reviewed.
-    const isOurs = (issue.labels || []).some(
-      (l) => (typeof l === "string" ? l : l.name) === "website-change-request",
-    );
-    if (!isOurs) return json({ error: "Unknown request." }, 400);
+    if (!isOurs(issue)) return json({ error: "Unknown request." }, 400);
 
     const pulls = await gh(`/repos/${repo()}/pulls?state=open&per_page=30`);
     const pr = (pulls || []).find((p) =>

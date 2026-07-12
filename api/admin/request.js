@@ -5,7 +5,7 @@
  * tagged @claude, which triggers the Claude Code Action.
  */
 
-import { LABEL, authorised, configured, ensureLabel, gh, json, repo } from "../../lib/github.js";
+import { LABEL, MARKER, authorised, configured, ensureLabel, gh, json, repo } from "../../lib/github.js";
 
 // Guard rails against a runaway client (or a stuck retry loop) burning API
 // tokens: only so many requests may be in flight at once.
@@ -50,7 +50,9 @@ export async function POST(request) {
   const title = instruction.split("\n")[0].slice(0, 70);
 
   // The @claude mention is what actually triggers the GitHub Action.
+  // MARKER is how we find this issue again - see lib/github.js.
   const body = [
+    MARKER,
     "@claude",
     "",
     "A change has been requested from the Movement Mechanics admin dashboard.",

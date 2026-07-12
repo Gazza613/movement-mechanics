@@ -10,7 +10,7 @@
  * anything, but cannot ship it.
  */
 
-import { authorised, configured, gh, json, repo } from "../../lib/github.js";
+import { authorised, configured, gh, isOurs, json, repo } from "../../lib/github.js";
 
 export async function POST(request) {
   if (!(await authorised(request))) return json({ error: "Not signed in." }, 401);
@@ -33,10 +33,7 @@ export async function POST(request) {
 
     // Only ever touch issues this dashboard created. Without this check, a
     // crafted request could close any issue or PR in the repository.
-    const isOurs = (issue.labels || []).some(
-      (l) => (typeof l === "string" ? l : l.name) === "website-change-request",
-    );
-    if (!isOurs) return json({ error: "Unknown request." }, 400);
+    if (!isOurs(issue)) return json({ error: "Unknown request." }, 400);
 
     // Close the PR Claude opened for it, if there is one.
     const pulls = await gh(`/repos/${repo()}/pulls?state=open&per_page=30`);

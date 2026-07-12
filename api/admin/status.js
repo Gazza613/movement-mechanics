@@ -7,7 +7,7 @@
  * actually read.
  */
 
-import { LABEL, authorised, configured, gh, json, repo } from "../../lib/github.js";
+import { authorised, configured, gh, isOurs, json, repo } from "../../lib/github.js";
 
 /** Vercel's bot posts the preview link as a comment on the PR. Pull it out. */
 function previewUrlFrom(comments) {
@@ -43,13 +43,21 @@ export async function GET(request) {
   if (!configured()) return json({ requests: [], configured: false });
 
   try {
+    // Fetch recent issues WITHOUT filtering by label, then match on the body
+    // marker. Filtering server-side by label looked tidier, but if the label
+    // ever fails to attach the request becomes invisible here while existing
+    // perfectly well on GitHub - which is precisely what happened.
     const [rawIssues, pulls] = await Promise.all([
-      gh(`/repos/${repo()}/issues?state=all&labels=${LABEL}&per_page=10&sort=created&direction=desc`),
+      gh(`/repos/${repo()}/issues?state=all&per_page=30&sort=created&direction=desc`),
       gh(`/repos/${repo()}/pulls?state=all&per_page=30&sort=updated&direction=desc`),
     ]);
 
-    // The issues endpoint also returns pull requests. Drop those.
-    const issues = (rawIssues || []).filter((i) => !i.pull_request);
+    // The issues endpoint also returns pull requests. Drop those, and anything
+    // that wasn't raised from this dashboard.
+    const issues = (rawIssues || [])
+      .filter((i) => !i.pull_request)
+      .filter(isOurs)
+      .slice(0, 10);
 
     const results = [];
 
