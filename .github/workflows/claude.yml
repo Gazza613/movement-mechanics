@@ -21,6 +21,7 @@ permissions:
   issues: write
   pull-requests: write
   id-token: write
+  actions: write # the action caches its runtime between runs
 
 jobs:
   claude:
