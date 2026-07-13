@@ -325,6 +325,10 @@
     function say(msg, ok) {
       alertEl.textContent = msg;
       alertEl.className = 'alert ' + (ok ? 'a-ok' : 'a-err');
+      // The bar lives at the top of the page. If the user is scrolled down
+      // among their requests, an error here is invisible - which is exactly
+      // how a failing Discard button looked like a button that did nothing.
+      alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     function clearSay() { alertEl.className = 'alert hidden'; }
 
