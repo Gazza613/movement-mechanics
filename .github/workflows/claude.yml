@@ -10,12 +10,17 @@ on:
   pull_request_review_comment:
     types: [created]
 
-# Least privilege: enough to read the repo, push a branch, and open a PR.
-# Deliberately NOT enough to merge one - a human does that.
+# Enough to read the repo, push a branch, and open a PR - and no more.
+#
+# id-token: write is required by claude-code-action, which mints an OIDC token
+# to authenticate back to GitHub. Without it the action dies on startup with
+# "Could not fetch an OIDC token" before doing any work. It grants the ability
+# to request an identity token, not write access to anything.
 permissions:
   contents: write
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   claude:
