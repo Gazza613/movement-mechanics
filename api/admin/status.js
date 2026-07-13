@@ -83,13 +83,9 @@ export async function GET(request) {
       if (!pr && issue.state === "open") {
         const branch = findBranch(branches, issue.number);
 
-        if (!branch) {
-          notices.push(
-            `#${issue.number}: no branch yet (saw ${branches.length} branches: ${branches
-              .map((b) => b.name)
-              .join(", ")})`,
-          );
-        } else {
+        // No branch yet simply means Claude is still working - that's the
+        // normal in-progress state, not something to alarm the client about.
+        if (branch) {
           try {
             pr = await openPr(branch, issue);
             pulls = [pr, ...pulls];
