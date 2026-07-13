@@ -205,6 +205,47 @@
 
     .hidden { display: none; }
 
+    /* ---- image upload ---- */
+
+    .drop {
+      border: 1px dashed var(--border-2);
+      border-radius: 10px;
+      padding: 30px 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+    }
+    .drop:hover, .drop.over {
+      border-color: var(--lime);
+      background: rgba(135, 255, 0, 0.03);
+    }
+    .drop-main { font-size: 14px; color: var(--grey); }
+    .drop .link { color: var(--lime); text-decoration: underline; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .gallery:empty { margin-top: 0; }
+
+    .thumb {
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--black-3);
+    }
+    .thumb img {
+      display: block; width: 100%; height: 78px; object-fit: cover;
+      background: var(--black-3);
+    }
+    .thumb .nm {
+      display: block; padding: 7px 8px; font-size: 10px; line-height: 14px;
+      color: var(--grey-dim); word-break: break-all;
+    }
+    .thumb.fresh { border-color: var(--lime); }
+
     @media (max-width: 620px) {
       h1 { font-size: 30px; }
       .panel { padding: 20px; }
@@ -246,6 +287,26 @@
           <button type="submit" id="send">Request change</button>
         </div>
       </form>
+    </div>
+
+    <h2>Your images</h2>
+    <div class="panel">
+      <div id="drop" class="drop">
+        <input type="file" id="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+        <p class="drop-main">Drag photos here, or <span class="link">browse</span></p>
+        <p class="hint" style="margin-top:8px;">
+          JPG, PNG or WebP. Large photos are shrunk automatically before uploading.
+        </p>
+        <p id="upstat" class="hint hidden" style="margin-top:12px;color:var(--lime);"></p>
+      </div>
+
+      <div id="gallery" class="gallery"></div>
+
+      <p class="hint" style="margin-top:18px;">
+        Uploading a photo doesn't change the website by itself. Once it's here,
+        ask for it by filename above &mdash; for example
+        <em>&ldquo;put team-2026.jpg on the about page under the founders&rdquo;</em>.
+      </p>
     </div>
 
     <h2>Your requests</h2>
@@ -391,7 +452,139 @@
       }
     });
 
+    /* ---------- images ---------- */
+
+    var dropEl = document.getElementById('drop');
+    var fileEl = document.getElementById('file');
+    var galEl = document.getElementById('gallery');
+    var upstatEl = document.getElementById('upstat');
+
+    var MAX_EDGE = 2000;   // plenty for a full-width hero on a retina screen
+    var QUALITY = 0.85;
+
+    /**
+     * Shrink the image in the browser before it ever leaves the machine.
+     * Phone photos routinely run 8-12MB, which both exceeds the upload limit
+     * and would make the page crawl if it landed on the site untouched.
+     * PNGs stay PNG so logos keep their transparency.
+     */
+    function compress(file) {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+
+          var w = img.naturalWidth;
+          var h = img.naturalHeight;
+          var scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+
+          // Already small enough and already a sensible format - send as-is.
+          if (scale === 1 && file.size < 1.5 * 1024 * 1024) return resolve(file);
+
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(w * scale);
+          canvas.height = Math.round(h * scale);
+
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          var isPng = file.type === 'image/png';
+          var type = isPng ? 'image/png' : 'image/jpeg';
+
+          canvas.toBlob(function (blob) {
+            if (!blob) return reject(new Error('compress failed'));
+            // If "compression" made it bigger (happens with small PNGs), keep the original.
+            if (blob.size >= file.size) return resolve(file);
+            resolve(new File([blob], file.name, { type: type }));
+          }, type, isPng ? undefined : QUALITY);
+        };
+
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          reject(new Error('not an image'));
+        };
+
+        img.src = url;
+      });
+    }
+
+    function loadImages() {
+      return fetch('/api/admin/images', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || d.error || !d.images) return;
+          galEl.innerHTML = d.images.map(function (i) {
+            return '<div class="thumb">' +
+              '<img src="' + esc(i.url) + '" alt="" loading="lazy">' +
+              '<span class="nm">' + esc(i.name) + '</span>' +
+            '</div>';
+          }).join('');
+        })
+        .catch(function () { /* transient */ });
+    }
+
+    function upload(files) {
+      var list = Array.prototype.slice.call(files).filter(function (f) {
+        return /^image\//.test(f.type);
+      });
+      if (!list.length) return;
+
+      upstatEl.classList.remove('hidden');
+      var done = 0;
+
+      var chain = list.reduce(function (p, f) {
+        return p.then(function () {
+          upstatEl.textContent = 'Uploading ' + (done + 1) + ' of ' + list.length + '...';
+          return compress(f)
+            .then(function (small) {
+              var body = new FormData();
+              body.append('image', small, small.name);
+              return fetch('/api/admin/upload', { method: 'POST', body: body, credentials: 'same-origin' });
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d.error) throw new Error(d.error);
+              done++;
+            });
+        });
+      }, Promise.resolve());
+
+      chain
+        .then(function () {
+          upstatEl.textContent = done + ' image' + (done === 1 ? '' : 's') + ' uploaded.';
+          say('Uploaded. It can take a minute to appear below. Now ask for it by filename above.', true);
+          setTimeout(loadImages, 3000);
+          setTimeout(loadImages, 20000);
+        })
+        .catch(function (err) {
+          upstatEl.classList.add('hidden');
+          say(err.message || 'That upload failed.', false);
+        });
+    }
+
+    dropEl.addEventListener('click', function () { fileEl.click(); });
+    fileEl.addEventListener('change', function () { upload(fileEl.files); fileEl.value = ''; });
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      dropEl.addEventListener(ev, function (e) {
+        e.preventDefault();
+        dropEl.classList.add('over');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      dropEl.addEventListener(ev, function (e) {
+        e.preventDefault();
+        dropEl.classList.remove('over');
+      });
+    });
+    dropEl.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files) upload(e.dataTransfer.files);
+    });
+
     load();
+    loadImages();
     // Poll while the tab is visible, so a change moving from "working" to
     // "ready to preview" appears without the client refreshing.
     setInterval(function () { if (!document.hidden) load(); }, 12000);
