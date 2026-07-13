@@ -345,6 +345,7 @@
         esc(r.label) + '</span>';
 
       var actions = '';
+
       if (r.state === 'review') {
         // Preview first, deliberately. Publishing is one click, but it should
         // not be the first click.
@@ -352,6 +353,11 @@
           actions += '<a class="btn-sm btn-preview" href="' + esc(r.preview) + '" target="_blank" rel="noopener">1. View preview</a>';
         }
         actions += '<button class="btn-sm btn-publish" data-publish="' + r.number + '">2. Publish to site</button>';
+      }
+
+      // Anything not yet published can be thrown away - including a request
+      // that's stuck or failed, which previously had no way out at all.
+      if (r.state === 'review' || r.state === 'working') {
         actions += '<button class="btn-sm btn-ghost" data-discard="' + r.number + '">Discard</button>';
       }
 
@@ -448,7 +454,7 @@
 
       var dis = e.target.closest('[data-discard]');
       if (dis) {
-        if (!confirm('Discard this change? It will not be applied to the site.')) return;
+        if (!confirm('Discard this request? It will not be applied to the site.')) return;
         clearSay();
         act('/api/admin/discard', dis.getAttribute('data-discard'), dis,
             'Could not discard that request.', null);
