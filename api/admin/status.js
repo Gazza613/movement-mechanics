@@ -7,7 +7,7 @@
  * actually read.
  */
 
-import { authorised, configured, gh, isOurs, json, repo } from "../../lib/github.js";
+import { authorised, configured, findPr, gh, isOurs, json, repo } from "../../lib/github.js";
 
 /** Vercel's bot posts the preview link as a comment on the PR. Pull it out. */
 function previewUrlFrom(comments) {
@@ -62,10 +62,7 @@ export async function GET(request) {
     const results = [];
 
     for (const issue of issues) {
-      // Claude links its PR back to the issue ("Closes #12"), so match on that.
-      const pr = (pulls || []).find((p) =>
-        new RegExp(`#${issue.number}\\b`).test(`${p.body || ""} ${p.title || ""}`),
-      );
+      const pr = findPr(pulls, issue.number);
 
       let preview = null;
       // Only chase the preview URL for PRs still awaiting review - it's an
