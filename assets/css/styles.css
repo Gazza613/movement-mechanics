@@ -499,7 +499,7 @@ td.hl { color: var(--white); font-weight: 600; }
 }
 .footer-col a, .footer-col p { font-size: 0.9rem; color: var(--grey); display: block; margin-bottom: 12px; transition: color 0.2s ease, transform 0.2s ease; }
 .footer-col a:hover { color: var(--lime); transform: translateX(3px); }
-.footer-col a.btn-primary, .footer-col a.btn-primary:hover { color: var(--black); }
+.footer-col a.btn-primary, .footer-col a.btn-primary:hover { color: var(--black); text-align: center; }
 .footer-brand img { margin-bottom: 18px; }
 .footer-brand p { max-width: 280px; font-size: 0.9rem; }
 .social-row { display: flex; gap: 10px; margin: 0; }
