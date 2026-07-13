@@ -73,6 +73,7 @@ export async function GET(request) {
       .slice(0, 10);
 
     const results = [];
+    const notices = [];
 
     for (const issue of issues) {
       let pr = findPr(pulls, issue.number);
@@ -81,13 +82,21 @@ export async function GET(request) {
       // so the client gets a preview instead of a request that never finishes.
       if (!pr && issue.state === "open") {
         const branch = findBranch(branches, issue.number);
-        if (branch) {
+
+        if (!branch) {
+          notices.push(
+            `#${issue.number}: no branch yet (saw ${branches.length} branches: ${branches
+              .map((b) => b.name)
+              .join(", ")})`,
+          );
+        } else {
           try {
             pr = await openPr(branch, issue);
             pulls = [pr, ...pulls];
           } catch (err) {
-            // Most likely a concurrent poll beat us to it - re-read and move on.
-            console.error(`Could not open PR for #${issue.number}:`, err.message);
+            // Surface it. Silently swallowing this is what made the last two
+            // failures so hard to see.
+            notices.push(`#${issue.number}: couldn't open PR from ${branch} - ${err.message}`);
             pulls = await gh(`/repos/${repo()}/pulls?state=all&per_page=30`);
             pr = findPr(pulls, issue.number);
           }
@@ -120,7 +129,7 @@ export async function GET(request) {
       });
     }
 
-    return json({ configured: true, requests: results });
+    return json({ configured: true, requests: results, notices });
   } catch (err) {
     console.error("Status lookup failed:", err);
     // Surface GitHub's own message. This endpoint is behind the login, so it's

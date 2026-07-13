@@ -387,6 +387,9 @@
             listEl.innerHTML = '<div class="empty">The change service isn\'t connected yet. Contact GAS Marketing.</div>';
             return;
           }
+          // Diagnostics while we bed this in - shows why a request is stuck
+          // rather than leaving it spinning with no explanation.
+          if (d.notices && d.notices.length) say(d.notices.join(' | '), false);
           render(d.requests || []);
         })
         .catch(function () { /* transient - the next poll will retry */ });
