@@ -7,7 +7,17 @@
  * actually read.
  */
 
-import { authorised, configured, findPr, gh, isOurs, json, repo } from "../../lib/github.js";
+import {
+  authorised,
+  configured,
+  findBranch,
+  findPr,
+  gh,
+  isOurs,
+  json,
+  openPr,
+  repo,
+} from "../../lib/github.js";
 
 /** Vercel's bot posts the preview link as a comment on the PR. Pull it out. */
 function previewUrlFrom(comments) {
@@ -47,10 +57,13 @@ export async function GET(request) {
     // marker. Filtering server-side by label looked tidier, but if the label
     // ever fails to attach the request becomes invisible here while existing
     // perfectly well on GitHub - which is precisely what happened.
-    const [rawIssues, pulls] = await Promise.all([
+    const [rawIssues, pullsInitial, branches] = await Promise.all([
       gh(`/repos/${repo()}/issues?state=all&per_page=30&sort=created&direction=desc`),
       gh(`/repos/${repo()}/pulls?state=all&per_page=30&sort=updated&direction=desc`),
+      gh(`/repos/${repo()}/branches?per_page=100`),
     ]);
+
+    let pulls = pullsInitial;
 
     // The issues endpoint also returns pull requests. Drop those, and anything
     // that wasn't raised from this dashboard.
@@ -62,7 +75,24 @@ export async function GET(request) {
     const results = [];
 
     for (const issue of issues) {
-      const pr = findPr(pulls, issue.number);
+      let pr = findPr(pulls, issue.number);
+
+      // Claude pushed a branch but left the PR for a human to open. Open it,
+      // so the client gets a preview instead of a request that never finishes.
+      if (!pr && issue.state === "open") {
+        const branch = findBranch(branches, issue.number);
+        if (branch) {
+          try {
+            pr = await openPr(branch, issue);
+            pulls = [pr, ...pulls];
+          } catch (err) {
+            // Most likely a concurrent poll beat us to it - re-read and move on.
+            console.error(`Could not open PR for #${issue.number}:`, err.message);
+            pulls = await gh(`/repos/${repo()}/pulls?state=all&per_page=30`);
+            pr = findPr(pulls, issue.number);
+          }
+        }
+      }
 
       let preview = null;
       // Only chase the preview URL for PRs still awaiting review - it's an
