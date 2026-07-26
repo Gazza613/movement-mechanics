@@ -393,6 +393,8 @@ section { position: relative; padding: 110px 0; }
   padding: 20px;
   text-align: justify;
 }
+.steps-story .step { text-align: center; display: flex; flex-direction: column; }
+.steps-story .step-text { text-align: center; flex: 1; }
 
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
