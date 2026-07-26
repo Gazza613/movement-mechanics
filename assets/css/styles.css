@@ -386,6 +386,13 @@ section { position: relative; padding: 110px 0; }
   display: block;
   margin-bottom: 10px;
 }
+.step-text {
+  margin-top: 16px;
+  border: 1px solid var(--lime);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: justify;
+}
 
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
