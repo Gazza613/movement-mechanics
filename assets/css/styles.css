@@ -839,6 +839,11 @@ html.has-custom-cursor, html.has-custom-cursor * { cursor: none !important; }
 .venue-card:hover { border-color: var(--lime); transform: translateY(-6px); }
 .venue-card .card-icon { margin: 0 auto 18px; }
 
+/* ---------- Service location links ---------- */
+.location-links { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 18px; }
+.location-link { display: inline-flex; align-items: center; gap: 8px; color: var(--lime); font-weight: 600; font-size: 0.92rem; }
+.location-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+
 /* ---------- Sticky mobile call bar ---------- */
 .mobile-callbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 600; background: var(--black-1); border-top: 1px solid var(--border); display: none; }
 @media (max-width: 768px) {
