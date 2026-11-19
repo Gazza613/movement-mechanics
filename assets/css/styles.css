@@ -147,10 +147,10 @@ section { position: relative; padding: 110px 0; }
   border-bottom-color: var(--border);
 }
 .brand { display: flex; align-items: center; gap: 10px; z-index: 2; }
-.brand img { height: 60px; width: auto; }
+.brand img { height: 96px; width: auto; }
 .brand-word { font-family: var(--font-display); font-size: 1.05rem; letter-spacing: 1px; }
 .brand-word span { color: var(--lime); }
-@media (max-width: 480px) { .brand img { height: 48px; } }
+@media (max-width: 480px) { .brand img { height: 72px; } }
 
 .footer-brand img { height: auto; width: 220px; max-width: 60%; }
 
